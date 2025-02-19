@@ -4,21 +4,36 @@ import { DataBase } from "./db/dblink";
 export class PlayerManager {
 
     #connectedPlayers = {};
-    #activeChannels = {
-        "voip": []
-    }
+    #activeChannels
 
-    constructor(server, dbport = 27017) {
+    constructor(server, db = new DataBase(27017)) {
         if (!(server instanceof Server)) {
             throw new Error("Invalid server instance");
         }
 
         this.server = server;
-        this.db = new DataBase(dbport);
+        this.db = db;
+
+        this.#activeChannels = this.db.getChannelNames();
     }
 
     getPlayer(username) {
         return this.#connectedPlayers[username];
+    }
+
+    getPlayerChannels(username) {
+        const player = this.getPlayer(username);
+        if (!player) {
+            throw new Error(`Player ${username} not found`);
+        }
+
+        return Object.keys(this.#activeChannels).filter(chan =>
+            this.#activeChannels[chan].some(user => user.username === username)
+        );
+    }
+
+    getChannelPLayerList(channel) {
+        return this.#activeChannels[channel];
     }
 
     addPlayer(player) {
@@ -26,11 +41,32 @@ export class PlayerManager {
             throw new Error("Invalid player instance");
         }
 
+        if (!this.db.getPlayerByName(player.username)) {
+            throw new Error(`Player ${player.username} not found in the database`);
+        }
+
         this.#connectedPlayers[player._id] = player;
+    }
+
+    addChannel(channel) {
+        if (this.#activeChannels[channel]) {
+            throw new Error(`Channel ${channel} already exists`);
+        }
+
+        if (this.db.addChannel(channel) !== null) {
+            this.#activeChannels[channel] = [];
+        }
+
     }
 
     removePlayer(username) {
         delete this.#connectedPlayers[username];
+    }
+
+    removeChannel(channel) {
+        if (this.db.deleteChannel(channel) !== null) {
+            delete this.#activeChannels[channel];
+        }
     }
 
     processChannelChange(username, data) {
@@ -62,15 +98,25 @@ export class PlayerManager {
 
         switch (command) {
             case 'join':
+                const channel = this.db.getChannel(chan);
+                if (channel.visibility === 'private' && permissionLevel < 1 && !channel.allowed.includes(username)) {
+                    console.error(`Player ${username} does not have the required permissions for channel ${chan}`);
+                    this.server.sendDeniedMessage(username, `Player does not have the required permissions for channel ${chan}`);
+                    return;
+                }
                 this.#activeChannels[chan].push({ username, status: 'Active' });
+                this.#connectedPlayers[username].setChan(chan, channel.default);
+                this.server.sendSuccessMessage(username, `Joined channel ${chan}`);
                 break;
             case 'leave':
                 const index = this.#activeChannels[chan].findIndex(user => user.username === username);
                 if (index === -1) {
                     console.error(`Player ${username} not found in channel ${chan}`);
+                    this.server.sendDeniedMessage(username, `Player not found in channel ${chan}`);
                     return;
                 }
                 this.#activeChannels[chan].splice(index, 1);
+                this.server.sendSuccessMessage(username, `Left channel ${chan}`);
                 break;
             case 'mute':
                 this.#activeChannels[chan].forEach(user => {
@@ -78,17 +124,22 @@ export class PlayerManager {
                         user.status = 'Sleeping';
                     }
                 });
+                this.server.sendSuccessMessage(username, `Muted in channel ${chan}`);
                 break;
             case 'priority':
                 if (permissionLevel < 3) {
                     console.warn(`Player ${username} does not have the required permissions for priority in channel ${chan}`);
+                    this.server.sendDeniedMessage(username, `Player does not have the required permissions for priority in channel ${chan}`);
                     return;
                 }
                 this.#activeChannels[chan].forEach(user => {
                     if (user.username === username) {
-                        user.status = 'Override';
+                        if (user.status === 'Override') {
+                            user.status = 'Active';
+                        } else user.status = 'Override';
                     }
                 });
+                this.server.sendSuccessMessage(username, `Priority in channel ${chan} updated`);
                 break;
         }
     }
@@ -104,30 +155,40 @@ export class PlayerManager {
         this.db.getPlayerByName(target).then(player => {
             if (!player) {
                 console.error(`Target player ${target} not found in the database`);
+                this.server.sendDeniedMessage(username, `Target player ${target} not found`);
                 return;
             }
 
             const user = this.getPlayer(username);
             if (!user || user.getPerm() < 1) {
                 console.error(`User ${username} does not have the required permissions`);
+                this.server.sendDeniedMessage(username, `Player does not have the required permissions`);
                 return;
             }
 
             if (chan) {
                 if (!this.#activeChannels[chan]) {
                     console.error(`Channel ${chan} does not exist`);
+                    this.server.sendDeniedMessage(username, `Channel ${chan} does not exist`);
                     return;
                 }
                 player.setChan(chan, level);
             } else {
                 if (player.getPerm() === 2 || level > user.getPerm()) {
                     console.error(`Cannot change global permissions for target player ${target}`);
+                    this.server.sendDeniedMessage(username, `Cannot change global permissions for target player ${target}`);
                     return;
                 }
                 player.setPerm(level);
             }
 
-            this.db.modifyPlayer(player);
+            this.db.modifyPlayer(player).then(r => {}).catch(err => {
+                console.error(`Failed to modify target player ${target}: ${err.message}`);
+                this.server.sendDeniedMessage(username, `Failed to modify target player ${target}`);
+            });
+
+            this.server.sendSuccessMessage(username, `Permissions for target player ${target} updated`);
+            this.server.sendUpdatedPermissions(target, { level, chan });
         }).catch(err => {
             console.error(`Failed to retrieve target player ${target} from the database: ${err.message}`);
         });
@@ -149,29 +210,37 @@ export class PlayerManager {
             case "delete":
                 if (!this.#activeChannels[chan]) {
                     console.warn(`Channel ${chan} does not exist`);
+                    this.server.sendDeniedMessage(username, `Channel ${chan} does not exist`);
                     return;
                 }
                 if (this.#activeChannels[chan].length > 0) {
+                    this.server.sendDeniedMessage(username, `Channel ${chan} is currently occupied`);
                     console.warn(`Channel ${chan} is currently occupied`);
                     return;
                 }
-                delete this.#activeChannels[chan];
+                this.server.sendSuccessMessage(username, `Channel ${chan} deleted`);
+                this.removeChannel(chan);
                 console.log(`Channel ${chan} deleted`);
                 break;
 
             case "force_delete":
-                delete this.#activeChannels[chan];
+                this.removeChannel(chan);
+                this.server.sendSuccessMessage(username, `Channel ${chan} deleted`);
                 console.log(`Channel ${chan} forcefully deleted`);
                 break;
 
             case "add":
-                // TODO: Add logic to add a new channel
-                console.log(`TODO: Add logic to add a new channel`);
+                this.db.addChannel(name, level).then(r => {}).catch(err => {
+                    console.error(`Failed to add channel ${name}: ${err.message}`);
+                    this.server.sendDeniedMessage(username, `Failed to add channel ${name}`);
+                });
+                this.server.sendSuccessMessage(username, `Channel ${name} added`);
                 break;
 
             case "changedefault":
                 // TODO: Add logic to change default visibility of the channel
                 console.log(`TODO: Add logic to change default visibility of the channel`);
+                this.server.sendSuccessMessage(username, `Default visibility of channel ${chan} changed to ${level}`);
                 break;
 
             default:

@@ -36,16 +36,28 @@ export class DataBase {
                 return;
             }
 
+            const pass = this.#generatePassword();
+
             const result = await collection.insertOne({
                 _id: player._id,
                 channels: player.channels,
-                globalPermissions: player.globalPermissions
+                globalPermissions: player.globalPermissions,
+                password: pass
             });
-            console.log(`Player ${player._id} added to the database`);
+            console.log(`Player ${player._id} password: ${pass} added to the database`);
             return result;
         } catch (err) {
             throw new Error("Failed to add player to the database");
         }
+    }
+
+    #generatePassword(size = 16) {
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let password = "";
+        for (let i = 0; i < size; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        return password;
     }
 
     async getPlayerByName(username) {
@@ -115,7 +127,72 @@ export class DataBase {
         }
     }
 
-    async addChannel(name) {
+    async addChannel(name, visibility = "private", allowed_names = [], defaultlevel = 2) {
+        const db = this.mongoClient.db(this.dbname);
+        const collection = db.channels;
 
+        try {
+            const existingChannel = await collection.findOne({ _id: name });
+            if (existingChannel) {
+                console.error(`Channel ${name} already exists in the database`);
+                return null;
+            }
+
+            const result = await collection.insertOne({
+                _id: name,
+                visibility: visibility,
+                allowed: allowed_names,
+                default: defaultlevel
+            });
+
+            console.log(`Channel ${name} added to the database`);
+            return result;
+        } catch (err) {
+            throw new Error("Failed to add channel to the database");
+        }
+    }
+
+    async getChannel(name) {
+        const db = this.mongoClient.db(this.dbname);
+        const collection = db.channels;
+
+        try {
+            const channel = await collection.findOne({ _id: name });
+            if (!channel) {
+                throw new Error(`Channel ${name} not found`);
+            }
+            return channel;
+        } catch (err) {
+            throw new Error("Failed to retrieve channel from the database");
+        }
+    }
+
+    async getChannelNames() {
+        const db = this.mongoClient.db(this.dbname);
+        const collection = db.channels;
+
+        try {
+            const channels = await collection.find().toArray();
+            return channels.map(channel => channel._id);
+        } catch (err) {
+            throw new Error("Failed to retrieve channel names from the database");
+        }
+    }
+
+    async deleteChannel(name) {
+        const db = this.mongoClient.db(this.dbname);
+        const collection = db.channels;
+
+        try {
+            const result = await collection.deleteOne({ _id: name });
+            if (result.deletedCount === 0) {
+                console.error(`Channel ${name} not found in the database`);
+            }
+
+            console.log(`Channel ${name} deleted from the database`);
+            return result;
+        } catch (err) {
+            throw new Error("Failed to delete channel from the database");
+        }
     }
 }
