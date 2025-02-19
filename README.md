@@ -77,5 +77,3 @@ This type is used to manage channel operations. (This requires admin permissions
   "level": "permission_level" (for `change_default` or optional for `add`)
 }
 ```
-
-
