@@ -13,7 +13,6 @@ export class WebSocketHandler {
         this.app = express();
         this.SECRET_KEY = SECRET_KEY;
         this.wss = new WebSocket.Server({ port: 8081 });
-        this.users = { "testuser": "password123" }; // todo - link mongo db
         this.app.use(express.json());
         this.setupRoutes();
         this.setupWebSocket();
@@ -23,8 +22,9 @@ export class WebSocketHandler {
         this.app.post("/login", (req, res) => {
             const { username, password } = req.body;
 
-            if (this.users[username] && this.users[username] === password) {
-                const token = jwt.sign({ username }, this.SECRET_KEY, { expiresIn: "1h" });
+            const player = this.server.players.db.getPlayerByName(username);
+            if (player && player.password === password) {
+                const token = jwt.sign({ username }, this.SECRET_KEY, { expiresIn: "12h" });
                 return res.json({ token });
             }
 
