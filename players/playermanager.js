@@ -34,15 +34,15 @@ export class PlayerManager {
     }
 
     processChannelChange(username, data) {
-        if (!data || typeof data !== 'object' || !data.channel || !data.command) {
+        if (!data || typeof data !== 'object' || !data.chan || !data.command) {
             throw new Error("Invalid data structure");
         }
 
-        const { channel, command } = data;
+        const { chan, command } = data;
         const validCommands = ['join', 'leave', 'mute', 'priority'];
 
-        if (!this.#activeChannels[channel]) {
-            throw new Error(`Channel ${channel} does not exist`);
+        if (!this.#activeChannels[chan]) {
+            throw new Error(`Channel ${chan} does not exist`);
         }
 
         if (!validCommands.includes(command)) {
@@ -54,26 +54,26 @@ export class PlayerManager {
             throw new Error(`Player ${username} not found`);
         }
 
-        const permissionLevel = player.getChan(channel);
+        const permissionLevel = player.getChan(chan);
         if (permissionLevel === 0) {
-            console.warn(`Player ${username} does not have the required permissions for channel ${channel}`);
+            console.warn(`Player ${username} does not have the required permissions for channel ${chan}`);
             return;
         }
 
         switch (command) {
             case 'join':
-                this.#activeChannels[channel].push({ username, status: 'Active' });
+                this.#activeChannels[chan].push({ username, status: 'Active' });
                 break;
             case 'leave':
-                const index = this.#activeChannels[channel].findIndex(user => user.username === username);
+                const index = this.#activeChannels[chan].findIndex(user => user.username === username);
                 if (index === -1) {
-                    console.error(`Player ${username} not found in channel ${channel}`);
+                    console.error(`Player ${username} not found in channel ${chan}`);
                     return;
                 }
-                this.#activeChannels[channel].splice(index, 1);
+                this.#activeChannels[chan].splice(index, 1);
                 break;
             case 'mute':
-                this.#activeChannels[channel].forEach(user => {
+                this.#activeChannels[chan].forEach(user => {
                     if (user.username === username) {
                         user.status = 'Sleeping';
                     }
@@ -81,10 +81,10 @@ export class PlayerManager {
                 break;
             case 'priority':
                 if (permissionLevel < 3) {
-                    console.warn(`Player ${username} does not have the required permissions for priority in channel ${channel}`);
+                    console.warn(`Player ${username} does not have the required permissions for priority in channel ${chan}`);
                     return;
                 }
-                this.#activeChannels[channel].forEach(user => {
+                this.#activeChannels[chan].forEach(user => {
                     if (user.username === username) {
                         user.status = 'Override';
                     }
@@ -99,7 +99,7 @@ export class PlayerManager {
         }
 
         const { target, modifier } = data;
-        const { level, channel } = modifier;
+        const { level, chan } = modifier;
 
         this.db.getPlayerByName(target).then(player => {
             if (!player) {
@@ -113,12 +113,12 @@ export class PlayerManager {
                 return;
             }
 
-            if (channel) {
-                if (!this.#activeChannels[channel]) {
-                    console.error(`Channel ${channel} does not exist`);
+            if (chan) {
+                if (!this.#activeChannels[chan]) {
+                    console.error(`Channel ${chan} does not exist`);
                     return;
                 }
-                player.setChan(channel, level);
+                player.setChan(chan, level);
             } else {
                 if (player.getPerm() === 2 || level > user.getPerm()) {
                     console.error(`Cannot change global permissions for target player ${target}`);
@@ -143,25 +143,25 @@ export class PlayerManager {
             throw new Error("Invalid data structure");
         }
 
-        const { type, channel, name, level } = data;
+        const { type, chan, name, level } = data;
 
         switch (type) {
             case "delete":
-                if (!this.#activeChannels[channel]) {
-                    console.warn(`Channel ${channel} does not exist`);
+                if (!this.#activeChannels[chan]) {
+                    console.warn(`Channel ${chan} does not exist`);
                     return;
                 }
-                if (this.#activeChannels[channel].length > 0) {
-                    console.warn(`Channel ${channel} is currently occupied`);
+                if (this.#activeChannels[chan].length > 0) {
+                    console.warn(`Channel ${chan} is currently occupied`);
                     return;
                 }
-                delete this.#activeChannels[channel];
-                console.log(`Channel ${channel} deleted`);
+                delete this.#activeChannels[chan];
+                console.log(`Channel ${chan} deleted`);
                 break;
 
             case "force_delete":
-                delete this.#activeChannels[channel];
-                console.log(`Channel ${channel} forcefully deleted`);
+                delete this.#activeChannels[chan];
+                console.log(`Channel ${chan} forcefully deleted`);
                 break;
 
             case "add":

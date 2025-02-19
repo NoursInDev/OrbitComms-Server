@@ -35,7 +35,7 @@ This type is used to send real-time audio data.
 #### **Expected `data` structure:**
 ```json
 {
-  "channel": "channel_name",
+  "chan": "channel_name",
   "bytes": "audio_data"
 }
 ```
@@ -46,7 +46,7 @@ This type is used to manage user actions within a channel.
 #### **Expected `data` structure:**
 ```json
 {
-  "channel": "channel_name",
+  "chan": "channel_name",
   "command": "join" | "leave" | "mute" | "priority"
 }
 ```
@@ -60,7 +60,7 @@ This type is used to modify user permissions. (This requires admin permissions)
   "target": "target_player_name",
   "modifier": {
     "level": "permission_level",
-    "channel": "channel_name" (optional)
+    "chan": "channel_name" (optional)
   }
 }
 ```
@@ -73,7 +73,7 @@ This type is used to manage channel operations. (This requires admin permissions
 {
   "type": "add" | "delete" | "force_delete" | "change_default",
   "name": "channel_name" (for `add`),
-  "channel": "channel_name" (for `delete` and `force_delete`),
+  "chan": "channel_name" (for `delete` and `force_delete`),
   "level": "permission_level" (for `change_default` or optional for `add`)
 }
 ```
