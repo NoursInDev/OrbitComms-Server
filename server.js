@@ -7,10 +7,14 @@ import {AudioProcessor} from "./audio/audioprocessor";
 import {PlayerManager} from "./players/playermanager";
 
 export class Server {
-    constructor() {
-        this.websocket = new WebSocketHandler(this);
-        this.audio = new AudioProcessor(this);
-        this.players = new PlayerManager(this);
+    constructor(
+        websocket = new WebSocketHandler(this),
+        audio = new AudioProcessor(this),
+        players = new PlayerManager(this)
+    ) {
+        this.websocket = websocket;
+        this.audio = audio;
+        this.players = players;
     }
 
     processMessage(username, data) {
@@ -25,21 +29,43 @@ export class Server {
             throw new Error("Message type is missing");
         }
 
-        switch (message.type) {
-            case "audio_data":
-                this.audio.processAudioData(username, data);
-                break;
-            case "channel_data":
-                this.players.processChannelChange(username, data);
-                break;
-            case "permissions":
-                this.players.managePermissions(username, data);
-                break;
-            case "channels":
-                this.players.manageChannels(username, data);
-                break;
-            default:
-                throw new Error("Unknown message type: " + message.type);
+        try {
+            switch (message.type) {
+                case "audio_data":
+                    this.audio.processAudioData(username, data);
+                    break;
+                case "channel_data":
+                    this.players.processChannelChange(username, data);
+                    break;
+                case "permissions":
+                    this.players.managePermissions(username, data);
+                    break;
+                case "channels":
+                    this.players.manageChannels(username, data);
+                    break;
+                default:
+                    throw new Error("Unknown message type: " + message.type);
+            }
+        } catch (e) {
+            console.error("Error in Server on request type " + message.type + " -> " + e);
+            this.sendDeniedMessage(username, "Error processing request");
         }
+
+    }
+
+    sendAudioData(username, data) {
+        this.websocket.sendMessageToUser(username, {type: "audio_data", data});
+    }
+
+    sendSuccessMessage(username, message) {
+        this.websocket.sendMessageToUser(username, {type: "request_success", message});
+    }
+
+    sendDeniedMessage(username, message) {
+        this.websocket.sendMessageToUser(username, {type: "request_denied", message});
+    }
+
+    sendUpdatedPermissions(username, data) {
+        this.websocket.sendMessageToUser(username, {type: "permission_updated", data});
     }
 }
