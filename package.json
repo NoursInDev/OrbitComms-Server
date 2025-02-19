@@ -1,0 +1,14 @@
+{
+  "name": "orbitcomms-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha tests/test*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NoursInDev/OrbitComms-Server.git"
+  },
+  "private": true
+}

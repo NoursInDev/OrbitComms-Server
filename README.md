@@ -77,3 +77,49 @@ This type is used to manage channel operations. (This requires admin permissions
   "level": "permission_level" (for `change_default` or optional for `add`)
 }
 ```
+
+## Data from server to client
+
+### 1. `audio_data`
+This type is used to send real-time audio data.
+
+#### **Expected `data` structure:**
+```json
+{
+  "chan": "channel_name",
+  "bytes": "audio_data"
+}
+```
+
+### 2. `request_success`
+This type is used to confirm that a request has been successfully processed.
+
+#### **Expected `data` structure:**
+```json
+{
+  "message": "success_message"
+}
+```
+
+### 3. `request_denied`
+This type is used to confirm that a request has been denied.
+
+#### **Expected `data` structure:**
+```json
+{
+  "reason": "denied_message"
+}
+```
+
+### 4. `permission_updated`
+This type is used to notify the client that his permissions have been updated. 
+One of these messages carries one modified permission. 
+For several permissions, several messages will be sent.
+
+#### **Expected `data` structure:**
+```json
+{
+  "level": "permission_level",
+  "chan": "channel_name" (optional)
+}
+```
