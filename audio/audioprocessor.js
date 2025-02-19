@@ -20,6 +20,10 @@ export class AudioProcessor {
             throw new Error("Player is not connected to the specified channel");
         }
 
+        if (player.channels[data.chan] < 2) {
+            return
+        }
+
         // send audio data to all players in the channel
         if (data.chan === 'voip') {
             //todo
