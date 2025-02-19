@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node --test --experimental-test-coverage tests/test*"
+    "test": "node --test --experimental-test-coverage tests/*"
   },
   "repository": {
     "type": "git",
