@@ -10,5 +10,11 @@
     "type": "git",
     "url": "https://github.com/NoursInDev/OrbitComms-Server.git"
   },
+  "dependencies": {
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.18.0",
+    "mongodb": "^6.13.0"
+  },
   "private": true
 }
