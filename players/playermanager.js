@@ -6,10 +6,7 @@ export class PlayerManager {
     #connectedPlayers = {};
     #activeChannels
 
-    constructor(server, db = new DataBase(27017)) {
-        if (!(server instanceof Server)) {
-            throw new Error("Invalid server instance");
-        }
+    constructor(server, db = { instance: new DataBase(this) }) {
 
         this.server = server;
         this.db = db;
