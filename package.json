@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node --test --experimental-test-coverage tests/*"
+    "test": "mocha tests/*.test.js --exit"
   },
   "repository": {
     "type": "git",
@@ -14,7 +14,9 @@
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0",
-    "mongodb": "^6.13.0"
+    "mongodb": "^6.13.0",
+    "mocha": "^11.1.0",
+    "chai": "^5.2.0"
   },
   "private": true
 }
