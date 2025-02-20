@@ -127,7 +127,7 @@ export class DataBase {
         }
     }
 
-    async addChannel(name, visibility = "private", allowed_names = [], defaultlevel = 2) {
+    async addChannel(name, defaultlevel = 2, visibility = "private", allowed_names = []) {
         const db = this.mongoClient.db(this.dbname);
         const collection = db.channels;
 

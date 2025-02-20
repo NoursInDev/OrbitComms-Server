@@ -48,15 +48,14 @@ export class PlayerManager {
         this.#connectedPlayers[player._id] = player;
     }
 
-    addChannel(channel) {
+    addChannel(channel, level = 2) {
         if (this.#activeChannels[channel]) {
             throw new Error(`Channel ${channel} already exists`);
         }
 
-        if (this.db.addChannel(channel) !== null) {
+        if (this.db.addChannel(channel, level) !== null) {
             this.#activeChannels[channel] = [];
         }
-
     }
 
     removePlayer(username) {
@@ -230,10 +229,7 @@ export class PlayerManager {
                 break;
 
             case "add":
-                this.db.addChannel(name, level).then(r => {}).catch(err => {
-                    console.error(`Failed to add channel ${name}: ${err.message}`);
-                    this.server.sendDeniedMessage(username, `Failed to add channel ${name}`);
-                });
+                this.addChannel(name, level);
                 this.server.sendSuccessMessage(username, `Channel ${name} added`);
                 break;
 
