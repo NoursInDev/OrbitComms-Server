@@ -1,6 +1,6 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const WebSocket = require("ws");
+import express from "express";
+import jwt from "jsonwebtoken";
+import WebSocket from "ws";
 import { Server } from "./server.js";
 
 export class WebSocketHandler {

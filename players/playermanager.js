@@ -1,5 +1,5 @@
-import { Server } from "../server";
-import { DataBase } from "./db/dblink";
+import { Server } from "../server.js";
+import { DataBase } from "./db/dblink.js";
 
 export class PlayerManager {
 
@@ -265,6 +265,9 @@ export class Player {
         if (permissionLevel === 0) {
             delete this.channels[channel];
         } else {
+            if (permissionLevel < 0 || permissionLevel > 3) {
+                throw new Error("Invalid permission level");
+            }
             this.channels[channel] = permissionLevel;
         }
     }
@@ -278,6 +281,9 @@ export class Player {
     }
 
     setPerm(permissionLevel) {
+        if (permissionLevel < 0 || permissionLevel > 2) {
+            throw new Error("Invalid permission level");
+        }
         this.globalPermissions = permissionLevel;
     }
 

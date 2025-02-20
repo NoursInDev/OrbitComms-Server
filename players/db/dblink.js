@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { Player, PlayerManager } from "../playermanager";
+import { Player, PlayerManager } from "../playermanager.js";
 
 export class DataBase {
     constructor(manager, dbport = 27017, dbname = "orbitcomms") {

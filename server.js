@@ -2,9 +2,9 @@
 Server.js manages the link between player groups, websocket messages sent and audio processor.
  */
 
-import {WebSocketHandler} from "./wshandler";
-import {AudioProcessor} from "./audio/audioprocessor";
-import {PlayerManager} from "./players/playermanager";
+import {WebSocketHandler} from "./wshandler.js";
+import {AudioProcessor} from "./audio/audioprocessor.js";
+import {PlayerManager} from "./players/playermanager.js";
 
 export class Server {
     constructor(
