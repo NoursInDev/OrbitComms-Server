@@ -25,23 +25,23 @@ export class Server {
             throw new Error("Invalid JSON data");
         }
 
-        if (!message.type) {
-            throw new Error("Message type is missing");
+        if (!message.type || !message.data) {
+            throw new Error("Message type or data is missing");
         }
 
         try {
             switch (message.type) {
                 case "audio_data":
-                    this.audio.processAudioData(username, data);
+                    this.audio.processAudioData(username, message.data);
                     break;
                 case "channel_data":
-                    this.players.processChannelChange(username, data);
+                    this.players.processChannelChange(username, message.data);
                     break;
                 case "permissions":
-                    this.players.managePermissions(username, data);
+                    this.players.managePermissions(username, message.data);
                     break;
                 case "channels":
-                    this.players.manageChannels(username, data);
+                    this.players.manageChannels(username, message.data);
                     break;
                 default:
                     throw new Error("Unknown message type: " + message.type);
