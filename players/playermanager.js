@@ -214,9 +214,9 @@ export class PlayerManager {
                     console.warn(`Channel ${chan} is currently occupied`);
                     return;
                 }
-                this.server.sendSuccessMessage(username, `Channel ${chan} deleted`);
                 this.removeChannel(chan);
                 console.log(`Channel ${chan} deleted`);
+                this.server.sendSuccessMessage(username, `Channel ${chan} deleted`);
                 break;
 
             case "force_delete":
