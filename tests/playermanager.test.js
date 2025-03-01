@@ -110,7 +110,10 @@ describe('PlayerManager', () => {
         players = []
         players.push(new Player("player1"))
         players.push(new Player("player2"))
+        players.push(new Player("admin"))
+        players[2].globalPermissions = 1
         await db.addPlayer(players[0])
+        await db.addPlayer(players[2])
         pm = new PlayerManager(new ServerMock(), db)
     });
 
@@ -133,9 +136,80 @@ describe('PlayerManager', () => {
         expect(() => pm.addPlayer(players[1])).to.throw("Player player2 not found in the database")
     });
 
-    // 01 - Channel Data
+    // 01 - Channel Management
 
+    it('should deny operation to non-admin', async () => {
+        const data = {
+            command: "create",
+            name: "channel0",
+            level: 2
+        }
+        pm.manageChannels("player1", data)
+        expect(lastMessage).to.deep.equal(['denied', 'player1', data])
+        expect(pm.db.getChannel("channel1")).to.throw("Failed to retrieve channel from the database")
+    })
 
+    it('should throw invalid data structure', () => {
+        expect(() => pm.manageChannels("admin")).to.throw("Invalid data structure")
+        expect(() => pm.manageChannels("admin", {
+            chan: "newchannel"
+        })).to.throw("Invalid data structure")
+        expect(() => pm.manageChannels("admin", {})).to.throw("Invalid data structure")
+    })
 
+    it('should accept operation', async () => {
+        const data = {
+            command: "create",
+            name: "channel0",
+            level: 2
+        }
+        await pm.manageChannels("admin", data)
+        expect(lastMessage).to.deep.equal(['success', 'admin', data])
+        expect(pm.db.getChannel("channel1")).to.deep.equal(new cdb("channel1", 2))
+    })
+
+    // 02 - Channel Data
+
+    it('should throw invalid data structure', () => {
+        expect(() => pm.processChannelChange("player1")).to.throw("Invalid data structure")
+        expect(() => pm.processChannelChange("player1", {
+            channel: "channel1"
+        })).to.throw("Invalid data structure")
+        expect(() => pm.processChannelChange("player1", {
+            command: "join"
+        })).to.throw("Invalid data structure")
+        expect(() => pm.processChannelChange("player1", {})).to.throw("Invalid data structure")
+    })
+
+    it('should throw invalid channel', () => {
+        expect(() => pm.processChannelChange("player1", {
+            command: "join",
+            channel: "channel1"
+        })).to.throw("Channel channel1 not found in the database")
+    })
+
+    it('should throw invalid command', async () => {
+        await pm.db.addChannel("channel1", 2)
+        expect(() => pm.processChannelChange("player1", {
+            command: "invalid",
+            channel: "voip" // default channel
+        })).to.throw("Invalid command")
+    })
+
+    it('should throw player not found', () => {
+        expect(() => pm.processChannelChange("player2", {
+            command: "join",
+            channel: "voip"
+        })).to.throw("Player player2 not found in the database")
+    })
+
+    it('should deny connection to private channel', async () => {
+        const data = {
+            command: "join",
+            channel: "channel1"
+        }
+        await pm.processChannelChange("player1", data)
+        expect(lastMessage).to.deep.equal(['denied', 'player1', data])
+    })
 
 });
