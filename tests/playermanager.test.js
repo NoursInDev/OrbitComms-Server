@@ -61,7 +61,6 @@ describe('PlayerManager', () => {
         async addPlayer(player) {
             if(this.#players.find(p => p._id === player.username)) return
             this.#players.push(new pdb(player.username, player.channels, player.globalPermissions))
-            return
         }
 
         async getPlayerByName(username) {
@@ -157,16 +156,77 @@ describe('PlayerManager', () => {
         expect(() => pm.manageChannels("admin", {})).to.throw("Invalid data structure")
     })
 
+    it('should deny operation to invalid channel', async () => {
+        const data = {
+            type: "delete",
+            chan: "channel1"
+        }
+        await pm.manageChannels("admin", data)
+        expect(lastMessage).to.deep.equal(['denied', 'admin', data])
+    })
+
     it('should accept operation', async () => {
         const data = {
-            command: "create",
-            name: "channel0",
-            level: 2
+            type: "add",
+            name: "channel1",
         }
         await pm.manageChannels("admin", data)
         expect(lastMessage).to.deep.equal(['success', 'admin', data])
         expect(pm.db.getChannel("channel1")).to.deep.equal(new cdb("channel1", 2))
     })
+
+    it('should deny operation', async () => {
+        const data = {
+            type: "add",
+            name: "channel1",
+        }
+        expect(pm.manageChannels("admin", data)).to.throw("Channel channel1 already exists")
+    })
+
+    it('should deny operation', async () => {
+        const data = {
+            type: "add",
+            name: "channel2",
+        }
+        await pm.manageChannels("admin", data)
+        expect(lastMessage).to.deep.equal(['denied', 'admin', data])
+    })
+
+    it('should deny operation due to connected player', async () => {
+        const init_data = {
+            command: "join",
+            channel: "channel1"
+        }
+        pm.processChannelChange("player1", init_data)
+        expect(lastMessage).to.deep.equal(['success', 'player1', init_data])
+        const data = {
+            type: "delete",
+            name: "channel1",
+        }
+        await pm.manageChannels("admin", data)
+        expect(lastMessage).to.deep.equal(['denied', 'admin', data])
+    })
+
+    it('should delete channel', async () => {
+        const data = {
+            type: "force_delete",
+            name: "channel1",
+        }
+        await pm.manageChannels("admin", data)
+        expect(pm.db.getChannel("channel1")).to.throw("Failed to retrieve channel from the database")
+    })
+
+    it('should accept operation', async () => {
+        const data = {
+            type: "add",
+            name: "channel0",
+        }
+        await pm.manageChannels("admin", data)
+        expect(lastMessage).to.deep.equal(['success', 'admin', data])
+        expect(pm.db.getChannel("channel1")).to.deep.equal(new cdb("channel1", 2))
+    })
+
+    // TODO : ChangeDefault Logic -> check for visibility and default permission level
 
     // 02 - Channel Data
 
@@ -211,5 +271,7 @@ describe('PlayerManager', () => {
         await pm.processChannelChange("player1", data)
         expect(lastMessage).to.deep.equal(['denied', 'player1', data])
     })
+
+
 
 });
