@@ -47,6 +47,9 @@ export class WebSocketHandler {
                 ws.username = decoded.username;
                 console.log(`User ${ws.username} connected via WebSocket`);
 
+                const player = this.server.players.db.getPlayerByName(ws.username);
+                this.server.players.addPlayer(player);
+
                 ws.send(JSON.stringify({ message: "Welcome to OrbitComms Server!" }));
 
                 ws.on("message", (message) => {
@@ -55,6 +58,10 @@ export class WebSocketHandler {
             } catch (error) {
                 ws.close();
             }
+
+            ws.on("close", () => {
+                this.server.players.removePlayer(ws.username);
+            });
         });
     }
 

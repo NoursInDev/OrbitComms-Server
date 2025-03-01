@@ -118,6 +118,8 @@ describe('PlayerManager', () => {
     Tests
      */
 
+    // 00 - Player Connection
+
     it('should return nothing for a non-connected player', () => {
         expect(pm.getPlayer("player1")).to.equal(undefined)
     })
@@ -130,6 +132,10 @@ describe('PlayerManager', () => {
     it('should throw player not found', () => {
         expect(() => pm.addPlayer(players[1])).to.throw("Player player2 not found in the database")
     });
+
+    // 01 - Channel Data
+
+
 
 
 });
