@@ -227,7 +227,7 @@ export class PlayerManager {
 
             case "add":
                 try {
-                    this.addChannel(name, level);
+                    this.addChannel(name, level || 2);
                     this.server.sendSuccessMessage(username, `Channel ${name} added`);
                     break;
                 } catch (e) {
