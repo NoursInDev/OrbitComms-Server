@@ -226,9 +226,13 @@ export class PlayerManager {
                 break;
 
             case "add":
-                this.addChannel(name, level);
-                this.server.sendSuccessMessage(username, `Channel ${name} added`);
-                break;
+                try {
+                    this.addChannel(name, level);
+                    this.server.sendSuccessMessage(username, `Channel ${name} added`);
+                    break;
+                } catch (e) {
+                    throw e;
+                }
 
             case "changedefault":
                 // TODO: Add logic to change default visibility of the channel
