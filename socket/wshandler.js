@@ -1,15 +1,12 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import WebSocket from "ws";
-import { Server } from "./server.js";
+import { Server } from "../server.js";
 
 export class WebSocketHandler {
-    constructor(server, SECRET_KEY = "super_secret_key") {
-        if (!(server instanceof Server)) {
-            throw new Error("Invalid server instance");
-        }
-
-        this.server = server;
+    constructor(SECRET_KEY = "super_secret_key") {
+        this.server = Server.instance;
+        if (!this.server) throw new Error("while creating new WebSocketHandler: server is null");
         this.app = express();
         this.SECRET_KEY = SECRET_KEY;
         this.wss = new WebSocket.Server({ port: 8081 });
@@ -20,9 +17,10 @@ export class WebSocketHandler {
 
     setupRoutes() {
         this.app.post("/login", (req, res) => {
-            const { username, password } = req.body;
+            const { session, username, password } = req.body;
 
-            const player = this.server.players.db.getPlayerByName(username);
+
+
             if (player && player.password === password) {
                 const token = jwt.sign({ username }, this.SECRET_KEY, { expiresIn: "12h" });
                 return res.json({ token });

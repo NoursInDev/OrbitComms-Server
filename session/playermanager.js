@@ -1,5 +1,5 @@
 import { Server } from "../server.js";
-import { DataBase } from "./db/dblink.js";
+import { DataBase } from "../dao/dblink.js";
 
 export class PlayerManager {
 
