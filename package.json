@@ -18,5 +18,9 @@
     "mocha": "^11.1.0",
     "chai": "^5.2.0"
   },
+  "orbitcomms": {
+    "dbPort": 27017,
+    "dbName": "orbitcomms"
+  },
   "private": true
 }
